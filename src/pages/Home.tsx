@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { ProductCard } from '@/components/ProductCard';
@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { products } from '@/data/products';
-import { Product, CartItem, Category } from '@/types/product';
+import { Category } from '@/types/product';
 import { useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useCart } from '@/contexts/CartContext';
 import {
   Carousel,
   CarouselContent,
@@ -17,6 +17,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const offers = [
   { id: 1, title: '20% OFF on Chicken', description: 'Valid on orders above ₹500', color: 'bg-gradient-to-r from-primary to-secondary' },
@@ -26,12 +35,17 @@ const offers = [
 
 export default function Home() {
   const [searchParams] = useSearchParams();
-  const categoryParam = searchParams.get('category') as Category | null;
+  const { addToCart, cartItemCount } = useCart();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'price' | 'name'>('name');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(categoryParam);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const categoryParam = searchParams.get('category') as Category | null;
+    setSelectedCategory(categoryParam);
+  }, [searchParams]);
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
@@ -55,20 +69,6 @@ export default function Home() {
     return filtered;
   }, [selectedCategory, searchQuery, sortBy]);
 
-  const handleAddToCart = (product: Product) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item => 
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-    toast.success(`${product.name} added to cart!`);
-  };
 
   const categories: { name: string; value: Category }[] = [
     { name: 'Chicken', value: 'chicken' },
@@ -79,7 +79,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)} />
+      <Header cartItemCount={cartItemCount} />
       
       <main className="container px-4 py-6 space-y-6">
         {/* Search and Filter */}
@@ -91,15 +91,66 @@ export default function Home() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
-            />
+          />
           </div>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => setSortBy(prev => prev === 'price' ? 'name' : 'price')}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
+          <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon">
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Filter & Sort</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-6 mt-6">
+                <div>
+                  <h3 className="font-semibold mb-3">Sort By</h3>
+                  <RadioGroup value={sortBy} onValueChange={(value: 'price' | 'name') => setSortBy(value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="name" id="name" />
+                      <Label htmlFor="name">Name</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="price" id="price" />
+                      <Label htmlFor="price">Price</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-3">Category</h3>
+                  <RadioGroup 
+                    value={selectedCategory || 'all'} 
+                    onValueChange={(value) => {
+                      setSelectedCategory(value === 'all' ? null : value as Category);
+                      setFilterOpen(false);
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="all" id="all" />
+                      <Label htmlFor="all">All</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="chicken" id="filter-chicken" />
+                      <Label htmlFor="filter-chicken">Chicken</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="mutton" id="filter-mutton" />
+                      <Label htmlFor="filter-mutton">Mutton</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="fish" id="filter-fish" />
+                      <Label htmlFor="filter-fish">Fish</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="prawns" id="filter-prawns" />
+                      <Label htmlFor="filter-prawns">Prawns</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {/* Offers Carousel */}
@@ -151,7 +202,7 @@ export default function Home() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={handleAddToCart}
+                onAddToCart={addToCart}
               />
             ))}
           </div>
