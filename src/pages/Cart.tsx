@@ -5,10 +5,40 @@ import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Minus, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 export default function Cart() {
   const navigate = useNavigate();
   const { cart, cartItemCount, cartTotal, updateQuantity, removeFromCart } = useCart();
+  const [showAddressDialog, setShowAddressDialog] = useState(false);
+  const [address, setAddress] = useState('');
+  const [distance, setDistance] = useState(3); // Mock distance in km
+
+  const handlePlaceOrder = () => {
+    if (!address) {
+      toast.error('Please enter your address');
+      return;
+    }
+    
+    const deliveryCharges = distance > 5 ? 50 : 0;
+    setShowAddressDialog(false);
+    navigate('/checkout', { 
+      state: { 
+        address, 
+        deliveryCharges 
+      } 
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -85,7 +115,11 @@ export default function Cart() {
                   <span>Total Items:</span>
                   <span>{cartItemCount}</span>
                 </div>
-                <Button className="w-full mt-4" size="lg">
+                <Button 
+                  className="w-full mt-4" 
+                  size="lg"
+                  onClick={() => setShowAddressDialog(true)}
+                >
                   Place Order
                 </Button>
               </div>
@@ -95,6 +129,42 @@ export default function Cart() {
       </main>
 
       <BottomNav />
+
+      <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Address</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="address">Delivery Address</Label>
+              <Input
+                id="address"
+                placeholder="Enter your complete address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="distance">Distance from shop (km)</Label>
+              <Input
+                id="distance"
+                type="number"
+                value={distance}
+                onChange={(e) => setDistance(Number(e.target.value))}
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {distance > 5 ? '₹50 delivery charges will be added' : 'Free delivery'}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handlePlaceOrder}>
+              Confirm & Proceed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
