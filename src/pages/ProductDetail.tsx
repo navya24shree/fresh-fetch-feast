@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Minus, Plus, ShoppingCart } from 'lucide-react';
 import { products } from '@/data/products';
-import { toast } from 'sonner';
+import { useCart } from '@/contexts/CartContext';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart, cartItemCount } = useCart();
   const product = products.find(p => p.id === id);
   const [quantity, setQuantity] = useState(1);
 
@@ -27,18 +28,21 @@ export default function ProductDetail() {
   }
 
   const handleAddToCart = () => {
-    toast.success(`${quantity}x ${product.name} added to cart!`);
-    navigate('/');
+    if (product) {
+      for (let i = 0; i < quantity; i++) {
+        addToCart(product);
+      }
+    }
   };
 
   const handleBuyNow = () => {
-    toast.success('Redirecting to checkout...');
+    handleAddToCart();
     navigate('/cart');
   };
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Header cartItemCount={0} showBackButton />
+      <Header cartItemCount={cartItemCount} showBackButton />
       
       <main className="container px-4 py-6 space-y-6 max-w-4xl mx-auto">
         <Card className="overflow-hidden">
