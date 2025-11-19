@@ -33,6 +33,13 @@ const offers = [
   { id: 3, title: 'Buy 1 Get 1 on Fish', description: 'Limited time offer', color: 'bg-gradient-to-r from-success to-emerald-500' },
 ];
 
+const categoryImages = [
+  { name: 'Chicken', value: 'chicken' as Category, image: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=200' },
+  { name: 'Mutton', value: 'mutton' as Category, image: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=200' },
+  { name: 'Fish', value: 'fish' as Category, image: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=200' },
+  { name: 'Prawns', value: 'prawns' as Category, image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=200' },
+];
+
 export default function Home() {
   const [searchParams] = useSearchParams();
   const { addToCart, cartItemCount } = useCart();
@@ -171,40 +178,54 @@ export default function Home() {
           </Carousel>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          <Badge
-            variant={selectedCategory === null ? "default" : "outline"}
-            className="cursor-pointer whitespace-nowrap"
-            onClick={() => setSelectedCategory(null)}
-          >
-            All
-          </Badge>
-          {categories.map((cat) => (
-            <Badge
+        {/* Category Filter with Images */}
+        <div className="flex gap-6 overflow-x-auto pb-2 px-2">
+          {categoryImages.map((cat) => (
+            <div 
               key={cat.value}
-              variant={selectedCategory === cat.value ? "default" : "outline"}
-              className="cursor-pointer whitespace-nowrap"
+              className="flex flex-col items-center gap-2 cursor-pointer"
               onClick={() => setSelectedCategory(cat.value)}
             >
-              {cat.name}
-            </Badge>
+              <div className={`w-20 h-20 rounded-full overflow-hidden border-4 transition-all ${
+                selectedCategory === cat.value 
+                  ? 'border-primary shadow-lg scale-110' 
+                  : 'border-border hover:border-primary/50'
+              }`}>
+                <img 
+                  src={cat.image} 
+                  alt={cat.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className={`text-sm font-medium ${
+                selectedCategory === cat.value ? 'text-primary' : 'text-foreground'
+              }`}>
+                {cat.name}
+              </span>
+            </div>
           ))}
         </div>
 
-        {/* Products Grid */}
+        {/* Products Carousel */}
         <div>
           <h2 className="text-2xl font-bold mb-4">
             {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Products` : 'All Products'}
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
-            ))}
+          <div className="px-8">
+            <Carousel className="w-full">
+              <CarouselContent className="-ml-4">
+                {filteredProducts.map((product) => (
+                  <CarouselItem key={product.id} className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <ProductCard
+                      product={product}
+                      onAddToCart={addToCart}
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
         </div>
       </main>
