@@ -24,7 +24,7 @@ export default function Cart() {
   const [address, setAddress] = useState('');
   const [distance, setDistance] = useState(3); // Mock distance in km
 
-  const handlePlaceOrder = () => {
+  const handleConfirm = () => {
     if (!address) {
       toast.error('Please enter your address');
       return;
@@ -32,7 +32,7 @@ export default function Cart() {
     
     const deliveryCharges = distance > 5 ? 50 : 0;
     setShowAddressDialog(false);
-    navigate('/checkout', { 
+    navigate('/payment', { 
       state: { 
         address, 
         deliveryCharges 
@@ -120,7 +120,7 @@ export default function Cart() {
                   size="lg"
                   onClick={() => setShowAddressDialog(true)}
                 >
-                  Place Order
+                  Confirm Order
                 </Button>
               </div>
             </Card>
@@ -159,8 +159,8 @@ export default function Cart() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handlePlaceOrder}>
-              Confirm & Proceed
+            <Button onClick={handleConfirm}>
+              Confirm & Proceed to Payment
             </Button>
           </DialogFooter>
         </DialogContent>

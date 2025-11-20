@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Product } from '@/types/product';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AddToCartDrawer } from './AddToCartDrawer';
+import { toast } from 'sonner';
 
 interface ProductCardProps {
   product: Product;
@@ -11,6 +14,12 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const navigate = useNavigate();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const handleAddWithWeight = (product: Product, weight: number, unit: 'kg' | 'g') => {
+    onAddToCart(product);
+    toast.success(`Added ${weight}${unit} of ${product.name} to cart`);
+  };
 
   return (
     <Card 
@@ -35,7 +44,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onAddToCart(product);
+              setIsDrawerOpen(true);
             }}
             className="gap-2"
           >
@@ -43,6 +52,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             Add
           </Button>
         </div>
+        <AddToCartDrawer
+          product={product}
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          onAdd={handleAddWithWeight}
+        />
       </div>
     </Card>
   );

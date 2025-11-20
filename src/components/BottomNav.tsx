@@ -1,4 +1,4 @@
-import { Home, Beef, Fish, ScrollText } from 'lucide-react';
+import { Home, Grid3x3, ShoppingCart, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -8,10 +8,9 @@ export function BottomNav() {
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Beef, label: 'Chicken', path: '/?category=chicken' },
-    { icon: Beef, label: 'Mutton', path: '/?category=mutton' },
-    { icon: Fish, label: 'Fish', path: '/?category=fish' },
-    { icon: ScrollText, label: 'Orders', path: '/orders' },
+    { icon: Grid3x3, label: 'Categories', path: '/categories' },
+    { icon: ShoppingCart, label: 'Cart', path: '/cart' },
+    { icon: User, label: 'Profile', path: '/profile' },
   ];
 
   return (
@@ -19,8 +18,7 @@ export function BottomNav() {
       <div className="container flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path || 
-                          (item.path.includes('category') && location.search.includes(item.label.toLowerCase()));
+          const isActive = location.pathname === item.path;
           
           return (
             <button
