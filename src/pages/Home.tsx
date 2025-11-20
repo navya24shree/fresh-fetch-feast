@@ -14,8 +14,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import {
   Sheet,
@@ -26,6 +24,7 @@ import {
 } from "@/components/ui/sheet";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import Autoplay from "embla-carousel-autoplay";
 
 const offers = [
   { id: 1, title: '20% OFF on Chicken', description: 'Valid on orders above ₹500', color: 'bg-gradient-to-r from-primary to-secondary' },
@@ -161,8 +160,18 @@ export default function Home() {
         </div>
 
         {/* Offers Carousel */}
-        <div className="px-8">
-          <Carousel className="w-full">
+        <div>
+          <Carousel 
+            className="w-full"
+            opts={{
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 1000,
+              }),
+            ]}
+          >
             <CarouselContent>
               {offers.map((offer) => (
                 <CarouselItem key={offer.id}>
@@ -173,8 +182,6 @@ export default function Home() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
           </Carousel>
         </div>
 
@@ -223,8 +230,6 @@ export default function Home() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
             </Carousel>
           </div>
         </div>
