@@ -17,18 +17,35 @@ interface Order {
   total: number;
   date: string;
   status: 'pending' | 'delivered';
+  deliveryBoyId?: string;
+  paymentMethod: 'cash' | 'card' | 'upi';
+}
+
+interface DeliveryBoy {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  totalDeliveries: number;
+  rating: number;
+  status: 'active' | 'inactive';
 }
 
 interface AdminContextType {
   offers: Offer[];
   products: Product[];
   orders: Order[];
+  deliveryBoys: DeliveryBoy[];
   addOffer: (offer: Omit<Offer, 'id'>) => void;
   updateOffer: (id: string, offer: Partial<Offer>) => void;
   deleteOffer: (id: string) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   addOrder: (order: Omit<Order, 'id'>) => void;
   updateOrderStatus: (id: string, status: 'pending' | 'delivered') => void;
+  assignOrderToDeliveryBoy: (orderId: string, deliveryBoyId: string) => void;
+  addDeliveryBoy: (deliveryBoy: Omit<DeliveryBoy, 'id' | 'totalDeliveries' | 'rating'>) => void;
+  updateDeliveryBoy: (id: string, deliveryBoy: Partial<DeliveryBoy>) => void;
+  deleteDeliveryBoy: (id: string) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -49,6 +66,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [deliveryBoys, setDeliveryBoys] = useState<DeliveryBoy[]>(() => {
+    const saved = localStorage.getItem('deliveryBoys');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem('offers', JSON.stringify(offers));
   }, [offers]);
@@ -60,6 +82,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem('orders', JSON.stringify(orders));
   }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('deliveryBoys', JSON.stringify(deliveryBoys));
+  }, [deliveryBoys]);
 
   const addOffer = (offer: Omit<Offer, 'id'>) => {
     const newOffer = { ...offer, id: Date.now().toString() };
@@ -84,7 +110,39 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   };
 
   const updateOrderStatus = (id: string, status: 'pending' | 'delivered') => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+    setOrders(prev => prev.map(o => {
+      if (o.id === id && status === 'delivered' && o.deliveryBoyId) {
+        // Update delivery boy stats
+        setDeliveryBoys(prevBoys => prevBoys.map(boy => 
+          boy.id === o.deliveryBoyId 
+            ? { ...boy, totalDeliveries: boy.totalDeliveries + 1 }
+            : boy
+        ));
+      }
+      return o.id === id ? { ...o, status } : o;
+    }));
+  };
+
+  const assignOrderToDeliveryBoy = (orderId: string, deliveryBoyId: string) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, deliveryBoyId } : o));
+  };
+
+  const addDeliveryBoy = (deliveryBoy: Omit<DeliveryBoy, 'id' | 'totalDeliveries' | 'rating'>) => {
+    const newDeliveryBoy = { 
+      ...deliveryBoy, 
+      id: Date.now().toString(),
+      totalDeliveries: 0,
+      rating: 5.0
+    };
+    setDeliveryBoys(prev => [...prev, newDeliveryBoy]);
+  };
+
+  const updateDeliveryBoy = (id: string, deliveryBoy: Partial<DeliveryBoy>) => {
+    setDeliveryBoys(prev => prev.map(db => db.id === id ? { ...db, ...deliveryBoy } : db));
+  };
+
+  const deleteDeliveryBoy = (id: string) => {
+    setDeliveryBoys(prev => prev.filter(db => db.id !== id));
   };
 
   return (
@@ -92,12 +150,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       offers,
       products,
       orders,
+      deliveryBoys,
       addOffer,
       updateOffer,
       deleteOffer,
       updateProduct,
       addOrder,
       updateOrderStatus,
+      assignOrderToDeliveryBoy,
+      addDeliveryBoy,
+      updateDeliveryBoy,
+      deleteDeliveryBoy,
     }}>
       {children}
     </AdminContext.Provider>

@@ -2,10 +2,12 @@ import { useAdmin } from '@/contexts/AdminContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 export default function AdminOrders() {
-  const { orders, updateOrderStatus } = useAdmin();
+  const { orders, updateOrderStatus, assignOrderToDeliveryBoy, deliveryBoys } = useAdmin();
 
   const pendingOrders = orders.filter(o => o.status === 'pending');
   const deliveredOrders = orders.filter(o => o.status === 'delivered');
@@ -13,6 +15,17 @@ export default function AdminOrders() {
   const handleStatusChange = (orderId: string, status: 'pending' | 'delivered') => {
     updateOrderStatus(orderId, status);
     toast.success(`Order marked as ${status}`);
+  };
+
+  const handleAssignDeliveryBoy = (orderId: string, deliveryBoyId: string) => {
+    assignOrderToDeliveryBoy(orderId, deliveryBoyId);
+    toast.success('Order assigned to delivery boy');
+  };
+
+  const getDeliveryBoyName = (id?: string) => {
+    if (!id) return 'Unassigned';
+    const boy = deliveryBoys.find(b => b.id === id);
+    return boy?.name || 'Unknown';
   };
 
   return (
@@ -30,6 +43,7 @@ export default function AdminOrders() {
                     <h3 className="font-semibold">Order #{order.id}</h3>
                     <p className="text-sm text-muted-foreground">Customer: {order.customerName}</p>
                     <p className="text-sm text-muted-foreground">Date: {order.date}</p>
+                    <p className="text-sm text-muted-foreground">Payment: {order.paymentMethod || 'cash'}</p>
                   </div>
                   <Badge variant="secondary">{order.status}</Badge>
                 </div>
@@ -41,9 +55,29 @@ export default function AdminOrders() {
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <p className="font-semibold">Total: ₹{order.total}</p>
-                  <Button size="sm" onClick={() => handleStatusChange(order.id, 'delivered')}>
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">Total: ₹{order.total}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Assign Delivery Boy</Label>
+                    <Select 
+                      value={order.deliveryBoyId || ''} 
+                      onValueChange={(value) => handleAssignDeliveryBoy(order.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={getDeliveryBoyName(order.deliveryBoyId)} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {deliveryBoys.filter(b => b.status === 'active').map((boy) => (
+                          <SelectItem key={boy.id} value={boy.id}>
+                            {boy.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" size="sm" onClick={() => handleStatusChange(order.id, 'delivered')}>
                     Mark as Delivered
                   </Button>
                 </div>
@@ -66,6 +100,8 @@ export default function AdminOrders() {
                     <h3 className="font-semibold">Order #{order.id}</h3>
                     <p className="text-sm text-muted-foreground">Customer: {order.customerName}</p>
                     <p className="text-sm text-muted-foreground">Date: {order.date}</p>
+                    <p className="text-sm text-muted-foreground">Payment: {order.paymentMethod || 'cash'}</p>
+                    <p className="text-sm text-muted-foreground">Delivered by: {getDeliveryBoyName(order.deliveryBoyId)}</p>
                   </div>
                   <Badge>{order.status}</Badge>
                 </div>
