@@ -8,6 +8,9 @@ import AdminOffers from '@/components/admin/AdminOffers';
 import AdminProducts from '@/components/admin/AdminProducts';
 import AdminOrders from '@/components/admin/AdminOrders';
 import AdminProfile from '@/components/admin/AdminProfile';
+import AdminDeliveryBoys from '@/components/admin/AdminDeliveryBoys';
+import AdminPerformance from '@/components/admin/AdminPerformance';
+import AdminRevenue from '@/components/admin/AdminRevenue';
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -32,10 +35,13 @@ export default function AdminDashboard() {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="offers" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-7 overflow-x-auto">
             <TabsTrigger value="offers">Offers</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="delivery">Delivery</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
           
@@ -49,6 +55,18 @@ export default function AdminDashboard() {
           
           <TabsContent value="orders" className="mt-6">
             <AdminOrders />
+          </TabsContent>
+          
+          <TabsContent value="delivery" className="mt-6">
+            <AdminDeliveryBoys />
+          </TabsContent>
+          
+          <TabsContent value="performance" className="mt-6">
+            <AdminPerformance />
+          </TabsContent>
+          
+          <TabsContent value="revenue" className="mt-6">
+            <AdminRevenue />
           </TabsContent>
           
           <TabsContent value="profile" className="mt-6">

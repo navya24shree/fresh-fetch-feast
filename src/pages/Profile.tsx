@@ -7,16 +7,19 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Edit2, LogOut } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Edit2, LogOut, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile, resetPassword } = useAuth();
   const { cartItemCount } = useCart();
   const [isEditing, setIsEditing] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [resetPasswordData, setResetPasswordData] = useState({ newPassword: '', confirmPassword: '' });
   const [profile, setProfile] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -40,6 +43,29 @@ export default function Profile() {
       updateProfile({ ...profile, role: user.role });
       setIsEditing(false);
       toast.success('Profile updated successfully!');
+    }
+  };
+
+  const handleResetPassword = () => {
+    if (!resetPasswordData.newPassword || !resetPasswordData.confirmPassword) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (resetPasswordData.newPassword !== resetPasswordData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (user) {
+      const result = resetPassword(user.phone, resetPasswordData.newPassword);
+      if (result.success) {
+        toast.success(result.message);
+        setIsResetDialogOpen(false);
+        setResetPasswordData({ newPassword: '', confirmPassword: '' });
+      } else {
+        toast.error(result.message);
+      }
     }
   };
 
@@ -118,6 +144,45 @@ export default function Profile() {
                 Save Changes
               </Button>
             )}
+
+            <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full gap-2">
+                  <Key className="h-4 w-4" />
+                  Reset Password
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Reset Password</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={resetPasswordData.newPassword}
+                      onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={resetPasswordData.confirmPassword}
+                      onChange={(e) => setResetPasswordData({ ...resetPasswordData, confirmPassword: e.target.value })}
+                    />
+                  </div>
+                  <Button className="w-full" onClick={handleResetPassword}>
+                    Reset Password
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <Button 
               variant="destructive" 

@@ -11,6 +11,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (name: string, phone: string, password: string) => { success: boolean; role?: 'user' | 'admin' };
+  register: (name: string, phone: string, password: string, address: string) => { success: boolean; message: string };
+  resetPassword: (phone: string, newPassword: string) => { success: boolean; message: string };
   logout: () => void;
   updateProfile: (user: User) => void;
   isAuthenticated: boolean;
@@ -34,6 +36,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const register = (name: string, phone: string, password: string, address: string): { success: boolean; message: string } => {
+    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    
+    // Check if user already exists
+    if (users.some((u: User) => u.phone === phone)) {
+      return { success: false, message: 'Phone number already registered' };
+    }
+    
+    const newUser = { name, phone, password, address, role: 'user' as const };
+    users.push(newUser);
+    localStorage.setItem('registeredUsers', JSON.stringify(users));
+    
+    return { success: true, message: 'Registration successful! Please login.' };
+  };
+
+  const resetPassword = (phone: string, newPassword: string): { success: boolean; message: string } => {
+    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    const userIndex = users.findIndex((u: User) => u.phone === phone);
+    
+    if (userIndex === -1) {
+      return { success: false, message: 'Phone number not found' };
+    }
+    
+    users[userIndex].password = newPassword;
+    localStorage.setItem('registeredUsers', JSON.stringify(users));
+    
+    // Update current user if logged in
+    if (user && user.phone === phone) {
+      const updatedUser = { ...user, password: newPassword };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    
+    return { success: true, message: 'Password reset successful!' };
+  };
+
   const login = (name: string, phone: string, password: string): { success: boolean; role?: 'user' | 'admin' } => {
     // Admin credentials
     if (name === 'admin' && phone === '213456789' && password === 'admin@123') {
@@ -45,14 +83,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true, role: 'admin' as const };
     }
     
-    // User credentials
-    if (name === 'user123' && phone === '123456789' && password === 'user@123') {
-      const regularUser = { name, phone, password, address: '', role: 'user' as const };
-      setUser(regularUser);
+    // Check registered users
+    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    const foundUser = users.find((u: User) => u.name === name && u.phone === phone && u.password === password);
+    
+    if (foundUser) {
+      setUser(foundUser);
       setIsAuthenticated(true);
-      setIsAdmin(false);
-      localStorage.setItem('user', JSON.stringify(regularUser));
-      return { success: true, role: 'user' as const };
+      setIsAdmin(foundUser.role === 'admin');
+      localStorage.setItem('user', JSON.stringify(foundUser));
+      return { success: true, role: foundUser.role };
     }
     
     return { success: false };
@@ -71,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateProfile, isAuthenticated, isAdmin }}>
+    <AuthContext.Provider value={{ user, login, register, resetPassword, logout, updateProfile, isAuthenticated, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
