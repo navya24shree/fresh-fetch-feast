@@ -36,9 +36,11 @@ export default function Profile() {
   }, [user]);
 
   const handleSave = () => {
-    updateProfile(profile);
-    setIsEditing(false);
-    toast.success('Profile updated successfully!');
+    if (user) {
+      updateProfile({ ...profile, role: user.role });
+      setIsEditing(false);
+      toast.success('Profile updated successfully!');
+    }
   };
 
   const handleLogout = () => {

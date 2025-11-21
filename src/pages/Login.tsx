@@ -22,12 +22,16 @@ export default function Login() {
       return;
     }
 
-    const success = login(name, phone, password);
-    if (success) {
+    const result = login(name, phone, password);
+    if (result.success) {
       toast.success('Login successful!');
-      navigate('/');
+      if (result.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } else {
-      toast.error('Login failed');
+      toast.error('Invalid credentials');
     }
   };
 
